@@ -11,7 +11,9 @@ import Dmca from "./pages/Dmca";
 import Privacy from "./pages/Privacy";
 
 function App() {
-  // const localHost = "http://localhost:5000"
+  const Host = "https://videoupload-wp35.onrender.com"
+  // const Host = "https://localHost:5000"
+
   const [videos, setVideos] = useState([]);
   const [ad, setAd] = useState(null);
   const [error, setError] = useState("");
@@ -28,7 +30,7 @@ function App() {
 
   const fetchVideos = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/videos");
+      const response = await axios.get(`${Host}/api/videos`);
       setVideos(response.data);
       setError("");
       
@@ -53,7 +55,7 @@ try {
 
   const fetchAd = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/ads/random");
+      const response = await axios.get("${Host}/api/ads/random");
       setAd(response.data);
     } catch (error) {
       console.error("Error fetching ad:", error);
@@ -81,12 +83,13 @@ try {
                 ad={ad}
                 videos={videos}
                 handleVideoError={handleVideoError}
+                Host={Host}
               />
             }
           />
           <Route
             path="/upload"
-            element={<Upload setError={setError} fetchVideos={fetchVideos} />}
+            element={<Upload setError={setError} fetchVideos={fetchVideos} Host={Host} />}
           />
           <Route
             path="/content-removal"

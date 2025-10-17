@@ -2,7 +2,7 @@ import React,{useState} from 'react'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'
 
-const Upload = ({setError, fetchVideos}) => {
+const Upload = ({setError, fetchVideos, Host}) => {
 
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
@@ -24,7 +24,7 @@ const Upload = ({setError, fetchVideos}) => {
     formData.append("title", title);
 
     try {
-      await axios.post("http://localhost:5000/api/videos/upload", formData, {
+      await axios.post(`${Host}/api/videos/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setTitle("");
@@ -40,7 +40,7 @@ const Upload = ({setError, fetchVideos}) => {
   return (
     <div className="h-screen flex justify-center items-center flex-col">
         <h2 className="text-xl font-semibold mb-2">Upload Video</h2>
-        <form onSubmit={handleUpload} className="space-y-4">
+        <form onSubmit={handleUpload} className="space-y-4 m-6">
           <input
             type="text"
             value={title}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaHeart, FaSearch } from "react-icons/fa";
 
-const Home = ({ error, ad, videos, handleVideoError }) => {
+const Home = ({ error, ad, videos, handleVideoError, Host }) => {
   const [likedVideos, setLikedVideos] = useState(() => {
     const storedLikes = localStorage.getItem("likedVideos");
     return storedLikes ? JSON.parse(storedLikes) : [];
@@ -75,7 +75,7 @@ const Home = ({ error, ad, videos, handleVideoError }) => {
                   </button>
                 </div>
                 <video
-                  src={`http://localhost:5000${video.videoUrl}`}
+                  src={`${Host}${video.videoUrl}`}
                   controls
                   className="w-full h-48 object-cover rounded"
                   onError={handleVideoError}
@@ -98,7 +98,7 @@ const Home = ({ error, ad, videos, handleVideoError }) => {
           aria-label="Watch Uploads"
         />
         <div className="tab-content border-base-300 bg-base-100 p-10">
-          Tab content 2
+          No uploaded videos
         </div>
 
         <input
@@ -114,7 +114,7 @@ const Home = ({ error, ad, videos, handleVideoError }) => {
                 <div key={video._id} className="rounded p-4">
                   <h3 className="text-lg font-medium mb-2">{video.title}</h3>
                   <video
-                    src={`http://localhost:5000${video.videoUrl}`}
+                    src={`${Host}${video.videoUrl}`}
                     controls
                     className="w-full h-48 object-cover rounded"
                     onError={handleVideoError}
