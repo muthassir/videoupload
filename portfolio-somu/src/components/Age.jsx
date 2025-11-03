@@ -33,7 +33,7 @@ const Age = () => {
             Try the forbidden fruit by clicking 'Yes' if you are at least 18 years old and agree to our Terms and Privacy Policy.
           </p>
           <div className="modal-action">
-            <button className="btn btn-error" onClick={handleYesClick}>
+            <button className="btn bg-gradient-to-r from-purple-600 to-purple-800" onClick={handleYesClick}>
               Yes
             </button>
             {/* You might want to add a "No" option as well */}

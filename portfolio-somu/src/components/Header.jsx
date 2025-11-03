@@ -10,7 +10,7 @@ const Header = () => {
     <header className="navbar bg-base-100 shadow-sm">
   <div className="navbar-start">
     <div className="dropdown">
-      <div tabIndex={0} role="button" className="btn bg-[#800080] text-white btn-circle">
+      <div tabIndex={0} role="button" className="btn bg-gradient-to-r from-purple-600 to-purple-800 btn-circle">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /> </svg>
       </div>
       <ul
@@ -25,10 +25,10 @@ const Header = () => {
     </div>
   </div>
   <div className="navbar-center">
-    <a className="btn btn-ghost text-xl">Indian<span className='text-[#800080]'>Flix</span></a>
+    <a className="btn btn-ghost text-xl">Flix<span className='text-purple-600 to-purple-800'>x</span></a>
   </div>
   <div className="navbar-end">
-    <button className="btn btn-ghost btn-circle" onClick={()=>{navigate("/upload")}}>
+    <button className="btn bg-gradient-to-r from-purple-600 to-purple-800 btn-circle" onClick={()=>{navigate("/upload")}}>
       <IoCloudUploadOutline size={23}/>
     </button>
   </div>

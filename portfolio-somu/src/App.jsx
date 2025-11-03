@@ -11,51 +11,37 @@ import Dmca from "./pages/Dmca";
 import Privacy from "./pages/Privacy";
 
 function App() {
-  const Host = "https://videoupload-wp35.onrender.com"
-  // const Host = "https://localHost:5000"
+  const Host = "https://videoupload-wp35.onrender.com";
+  // const Host = "http://localhost:5000";
 
   const [videos, setVideos] = useState([]);
   const [ad, setAd] = useState(null);
   const [error, setError] = useState("");
-
-  const [api, setApi] = useState([])
- 
+  const [loading, setLoading] = useState(false);
 
   // Fetch videos and ad on mount
   useEffect(() => {
     fetchVideos();
     fetchAd();
-    getApi()
   }, []);
 
   const fetchVideos = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(`${Host}/api/videos`);
       setVideos(response.data);
       setError("");
-      
     } catch (error) {
       console.error("Error fetching videos:", error);
-      setError("Failed to load videos.");
+      setError("Failed to load videos. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
-  const getApi = async ()=>{
-try {
-  const resp = await axios.get(`/producers/?count=5&offset=0&producerId=5924703508103168&producerName=Playboy&sort=date`)
-  console.log(resp.data);
-  setApi(resp.data)
-} catch (error) {
-  console.error("Error fetching videos api:", error);
-  setError("Failed to load videos api.");
-}
-  }
- 
-
-
 
   const fetchAd = async () => {
     try {
-      const response = await axios.get("${Host}/api/ads/random");
+      const response = await axios.get(`${Host}/api/ads/random`);
       setAd(response.data);
     } catch (error) {
       console.error("Error fetching ad:", error);
@@ -64,10 +50,8 @@ try {
 
   const handleVideoError = (e) => {
     console.error("Video playback error:", e);
-    setError(`Failed to play video: ${e.target.src}`);
+    setError(`Failed to play video: ${e.target.error?.message || 'Unknown error'}`);
   };
-
- 
 
   return (
     <>
@@ -82,6 +66,7 @@ try {
                 error={error}
                 ad={ad}
                 videos={videos}
+                loading={loading}
                 handleVideoError={handleVideoError}
                 Host={Host}
               />
@@ -93,7 +78,7 @@ try {
           />
           <Route
             path="/content-removal"
-            element={<Contentremoval setError={setError}  />}
+            element={<Contentremoval setError={setError} Host={Host} />}
           />
           <Route path="/DMCA" element={<Dmca />} />
           <Route path="/privacy-policy" element={<Privacy />} />

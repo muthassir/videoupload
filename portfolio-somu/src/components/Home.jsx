@@ -1,154 +1,225 @@
-import React, { useEffect, useState } from "react";
-import { FaHeart, FaSearch } from "react-icons/fa";
+import React, { useEffect, useState, useMemo } from "react";
+import { FaHeart, FaSearch, FaSpinner, FaCloud } from "react-icons/fa";
 
-const Home = ({ error, ad, videos, handleVideoError, Host }) => {
+const Home = ({ error, ad, videos, loading, handleVideoError, Host }) => {
   const [likedVideos, setLikedVideos] = useState(() => {
     const storedLikes = localStorage.getItem("likedVideos");
     return storedLikes ? JSON.parse(storedLikes) : [];
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredVideos, setFilteredVideos] = useState(videos);
+  const [activeTab, setActiveTab] = useState("latest");
+
+  // Fix: Ensure videos is always an array
+  const videosArray = useMemo(() => {
+    if (!videos) return [];
+    // If videos is an object with pagination, extract the videos array
+    if (videos.videos && Array.isArray(videos.videos)) {
+      return videos.videos;
+    }
+    // If videos is already an array, return it
+    if (Array.isArray(videos)) {
+      return videos;
+    }
+    // Fallback to empty array
+    return [];
+  }, [videos]);
+
+  // Memoized filtered videos for better performance
+  const filteredVideos = useMemo(() => {
+    if (searchQuery) {
+      return videosArray.filter((video) =>
+        video.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return videosArray;
+  }, [searchQuery, videosArray]);
+
+  const likedVideoList = useMemo(() => 
+    videosArray.filter((video) => likedVideos.includes(video._id)),
+    [videosArray, likedVideos]
+  );
 
   useEffect(() => {
     localStorage.setItem("likedVideos", JSON.stringify(likedVideos));
   }, [likedVideos]);
 
-  useEffect(() => {
-    const results = videos.filter((video) =>
-      video.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredVideos(results);
-  }, [searchQuery, videos]);
-
   const handleLike = (videoId) => {
-    if (likedVideos.includes(videoId)) {
-      setLikedVideos(likedVideos.filter((id) => id !== videoId));
-    } else {
-      setLikedVideos([...likedVideos, videoId]);
-    }
+    setLikedVideos(prev => 
+      prev.includes(videoId) 
+        ? prev.filter((id) => id !== videoId)
+        : [...prev, videoId]
+    );
   };
 
   const isVideoLiked = (videoId) => likedVideos.includes(videoId);
-
-  const likedVideoList = videos.filter((video) => likedVideos.includes(video._id));
 
   const handleSearchInputChange = (event) => {
     setSearchQuery(event.target.value);
   };
 
+  const renderVideoGrid = (videoList, emptyMessage) => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-48">
+          <FaSpinner className="animate-spin text-4xl text-purple-600 to-purple-800" />
+        </div>
+      );
+    }
+
+    if (!videoList || videoList.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <FaCloud className="mx-auto text-6xl  mb-4" />
+          <p className=" text-lg">{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {videoList.map((video) => (
+          <div key={video._id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+            <div className="card-body p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="card-title text-lg font-semibold line-clamp-2 flex-1 mr-2">
+                  {video.title}
+                </h3>
+                <button 
+                  className="btn btn-ghost btn-sm btn-circle hover:bg-red-50 transition-colors"
+                  onClick={() => handleLike(video._id)}
+                  aria-label={isVideoLiked(video._id) ? "Unlike video" : "Like video"}
+                >
+                  <FaHeart
+                    className={isVideoLiked(video._id) ? "text-purple-500" : "text-gray-400"}
+                    size={18}
+                  />
+                </button>
+              </div>
+              
+              <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                <video
+                  src={video.videoUrl}
+                  controls
+                  className="w-full h-full object-contain"
+                  onError={handleVideoError}
+                  preload="metadata"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              
+              <div className="card-actions justify-between items-center mt-3">
+                <div className="flex items-center gap-2">
+                  <FaCloud className="text-purple-500" size={14} />
+                  <span className="text-xs text-gray-500">Flixxx</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-xs text-gray-500">
+                    {new Date(video.uploadedAt).toLocaleDateString()}
+                  </span>
+                  {video.duration && (
+                    <span className="badge badge-outline badge-sm">
+                      {Math.round(video.duration)}s
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {video.fileSize && (
+                <div className="text-xs text-gray-400 text-right">
+                  {(video.fileSize / (1024 * 1024)).toFixed(1)} MB
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-4 flex items-center">
-        <div className="relative w-full">
+    <div className="container mx-auto p-4 min-h-screen">
+      {/* Search Bar */}
+      <div className="mb-8">
+        <div className="relative max-w-2xl mx-auto">
           <input
             type="text"
-            placeholder="Search videos..."
-            className="input input-bordered w-full pr-10 file-input border-2 border-[#800080]"
+            placeholder="Search videos by title..."
+            className="input input-bordered w-full pr-12 border-2 border-purple-600 to-purple-800 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 transition-all"
             value={searchQuery}
             onChange={handleSearchInputChange}
           />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <FaSearch className="text-gray-500" />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+            <FaSearch className="text-gray-400" />
           </div>
         </div>
       </div>
-      {/* */}
-      {/* name of each tab group should be unique */}
-      <div className="tabs tabs-border">
-        <input
-          type="radio"
-          name="my_tabs_2"
-          className="tab "
-          aria-label="Latest"
-          defaultChecked
-        />
-        <div className="tab-content border-base-300 bg-base-100 p-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredVideos.map((video) => (
-              <div key={video._id} className="rounded p-4">
-                <div className="flex items-center justify-between gap-1">
-                  <h3 className="text-lg font-medium mb-2">{video.title}</h3>
-                  <button className="cursor-pointer" onClick={() => handleLike(video._id)}>
-                    <FaHeart
-                      className={isVideoLiked(video._id) ? "text-[#800080]" : "text-gray-500"}
-                    />
-                  </button>
-                </div>
-                <video
-                  src={`${Host}${video.videoUrl}`}
-                  controls
-                  className="w-full h-48 object-cover rounded"
-                  onError={handleVideoError}
-                />
-              </div>
-            ))}
-            {filteredVideos.length === 0 && searchQuery !== "" && (
-              <p>No videos found matching your search query.</p>
-            )}
-            {filteredVideos.length === 0 && searchQuery === "" && videos.length === 0 && (
-              <p>No videos available.</p>
-            )}
-          </div>
-        </div>
 
-        <input
-          type="radio"
-          name="my_tabs_2"
-          className="tab"
-          aria-label="Watch Uploads"
-        />
-        <div className="tab-content border-base-300 bg-base-100 p-10">
-          No uploaded videos
-        </div>
-
-        <input
-          type="radio"
-          name="my_tabs_2"
-          className="tab"
-          aria-label="Liked"
-        />
-        <div className="tab-content border-base-300 bg-base-100 p-10">
-          {likedVideoList.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {likedVideoList.map((video) => (
-                <div key={video._id} className="rounded p-4">
-                  <h3 className="text-lg font-medium mb-2">{video.title}</h3>
-                  <video
-                    src={`${Host}${video.videoUrl}`}
-                    controls
-                    className="w-full h-48 object-cover rounded"
-                    onError={handleVideoError}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="h-screen">No liked videos yet.</p>
-          )}
-        </div>
+      {/* Tabs */}
+      <div className="tabs tabs-boxed justify-center mb-8 bg-base-200">
+        <button
+          className={`tab tab-lg ${activeTab === "latest" ? "tab-active bg-gradient-to-r from-purple-600 to-purple-800 text-white" : ""} `}
+          onClick={() => setActiveTab("latest")}
+        >
+          Latest
+        </button>
+        <button
+          className={`tab tab-lg ${activeTab === "liked" ? "tab-active bg-gradient-to-r from-purple-600 to-purple-800 text-white" : ""}`}
+          onClick={() => setActiveTab("liked")}
+        >
+          Liked ({likedVideoList.length})
+        </button>
       </div>
-      {/* */}
 
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded mb-4">{error}</div>
+        <div className={`alert ${error.includes('successfully') ? 'alert-success' : 'alert-error'} mb-6`}>
+          <span>{error}</span>
+        </div>
       )}
+
+      {/* Content based on active tab */}
+      <div className="mb-8">
+        {activeTab === "latest" && 
+          renderVideoGrid(
+            filteredVideos, 
+            searchQuery ? "No videos found matching your search." : "No videos available. Upload the first video!"
+          )
+        }
+        {activeTab === "liked" && 
+          renderVideoGrid(
+            likedVideoList, 
+            "No liked videos yet. Start liking some videos!"
+          )
+        }
+      </div>
 
       {/* Ad Section */}
       {ad && (
-        <div className="mb-8 p-4 bg-gray-100 rounded">
-          <h2 className="text-xl font-semibold mb-2">Sponsored Ad</h2>
-          <a href={ad.url} target="_blank" rel="noopener noreferrer">
-            <img
-              src={ad.imageUrl}
-              alt={ad.title}
-              className="w-full h-32 object-cover rounded mb-2"
-            />
-            <p className="text-lg font-medium">{ad.title}</p>
-          </a>
+        <div className="card bg-gradient-to-r from-purple-600 to-purple-800 text-white mb-8">
+          <div className="card-body">
+            <h2 className="card-title text-purple-200">Sponsored</h2>
+            <a 
+              href={ad.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="no-underline hover:no-underline"
+            >
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <img
+                  src={ad.imageUrl}
+                  alt={ad.title}
+                  className="w-full md:w-48 h-32 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <p className="text-xl font-semibold mb-2">{ad.title}</p>
+                  <p className="text-purple-200">Click to learn more</p>
+                </div>
+              </div>
+            </a>
+          </div>
         </div>
       )}
-
-      {/* Video List */}
     </div>
   );
 };
